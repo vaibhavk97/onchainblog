@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Onchain blog</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC"
+      crossorigin="anonymous"
+    />
+  </head>
+  <script>
+    function hex2utf8(pStr) {
+      var tempstr = "";
+      try {
+        if (pStr.startsWith("0x")) pStr = pStr.slice(2);
+        tempstr = decodeURIComponent(
+          pStr.replace(/\s+/g, "").replace(/[0-9a-f]{2}/g, "%$&")
+        );
+      } catch (err) {
+        return -1;
+      }
+      return tempstr;
+    }
+  </script>
+  <body class = "bg-dark">
+    <div class="container bg-dark text-white">
+      <div class="center-block">
+        <form>
+          <legend>Onchain.blog</legend>
+          <div class="form-group">
+            <label for="blockChainAddress">Account address</label>
+            <input
+              type="text"
+              class="form-control"
+              id="blockChainAddress"
+              placeholder="Enter blockchain account address"
+            />
+          </div>
+          <div class="form-check form-check-inline mt-2">
+            <input
+              class="form-check-input"
+              type="radio"
+              name="chain"
+              id="eth"
+              value="ETH"
+              checked
+            />
+            <label class="form-check-label" for="eth">ETH</label>
+          </div>
+          <div class="form-check form-check-inline">
+            <input
+              class="form-check-input"
+              type="radio"
+              name="chain"
+              id="bsc"
+              value="BSC"
+            />
+            <label class="form-check-label" for="bsc">BSC</label>
+          </div>
+          <div class="form-group">
+            <label for="exampleInputEmail1">Enter API key (optional)</label>
+            <input
+              type="text"
+              class="form-control"
+              id="apiKey"
+              placeholder="Enter API key for Etherscan/Bscscan"
+            />
+          </div>
+          <button type="submit" id="submitButton" class="btn btn-primary mt-2 mb-2">
+            Read!
+          </button>
+        </form>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+        <script
+          src="https://cdn.ethers.io/scripts/ethers-v3.min.js"
+          charset="utf-8"
+          type="text/javascript"
+        ></script>
+        <div class="card text-white border-light bg-dark mt-3 d-none">
+          <div class="card-header border-white"></div>
+          <div class="card-body"></div>
+        </div>
+        <script type="text/javascript">
+          $("#submitButton").click(function (e) {
+            e.preventDefault();
+            var selected = $("input[type='radio'][name='chain']:checked").val();
+            var address = document.getElementById("blockChainAddress").value;
+            var apiKey = document.getElementById("apiKey").value;
+            var URL1 = 0;
+            let hashTrack = "";
+            if (selected === "ETH") {
+              URL1 =
+                "https://api.etherscan.io/api?module=account&action=txlist&address=" +
+                address +
+                "&startblock=0&endblock=99999999&sort=asc&apikey=" +
+                apiKey;
+              hashTrack = "https://etherscan.io/tx/";
+            } else {
+              URL1 =
+                "https://api.bscscan.com/api?module=account&action=txlist&address=" +
+                address +
+                "&startblock=1&endblock=99999999&sort=asc&apikey=" +
+                apiKey;
+              hashTrack = "https://bscscan.com/tx/";
+            }
+            let responseJson = [];
+            fetch(URL1)
+              .then((response) => response.json())
+              .then((data) => {
+                let status = data.status;
+                console.log(data);
+                if (status === "1") {
+                  for (let element of data.result) {
+                    let message = hex2utf8(element.input);
+                    if (
+                      message !== -1 &&
+                      message !== "" &&
+                      !message.includes("0x")
+                    ) {
+                      responseJson.push({
+                        blockNumber: element.blockNumber,
+                        from: element.from,
+                        to: element.to,
+                        hash: element.hash,
+                        message: message,
+                        timestamp: element.timeStamp,
+                      });
+                    }
+                  }
+                  $.each(responseJson, function (index, item) {
+                    var cards = $(".card:first").clone();
+                    var hash = item.hash;
+                    var from = item.from;
+                    var to = item.to;
+                    var blockNumber = item.blockNumber;
+                    var message = item.message;
+                    var timestamp = new Date(Number(item.timestamp) * 1000);
+                    var info = `
+                    <blockquote class="blockquote mb-0">
+                    <p>${message}.</p>
+                    <footer class="blockquote-footer">From: ${from}</footer>
+                    <footer class="blockquote-footer">To: ${to}</footer>
+                    <footer class="blockquote-footer">Block: ${blockNumber}</footer>
+                    <footer class="blockquote-footer">TimeStamp: ${timestamp}</footer>
+                    </blockquote>
+                    `;
+                    var formatted;
+                    $(cards).removeClass('d-none');
+                    $(cards)
+                      .find(".card-header")
+                      .html("<a href="+hashTrack+hash+">"+hash+"</a>");
+                    $(cards).find(".card-body").html(info);
+                    $(cards).show();
+                    $(cards).appendTo($(".container"));
+                  });
+                  $("#submitButton").addClass('d-none');
+                } else {
+                  alert(
+                    "Invalid address or rate limit exceeded, please use a valid API key"
+                  );
+                }
+              });
+          });
+        </script>
+      </div>
+    </div>
+  </body>
+</html>
