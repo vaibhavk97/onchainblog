@@ -92,14 +92,14 @@
               URL1 =
                 "https://api.etherscan.io/api?module=account&action=txlist&address=" +
                 address +
-                "&startblock=0&endblock=99999999&sort=asc&apikey=" +
+                "&startblock=0&endblock=99999999&sort=desc&apikey=" +
                 apiKey;
               hashTrack = "https://etherscan.io/tx/";
             } else {
               URL1 =
                 "https://api.bscscan.com/api?module=account&action=txlist&address=" +
                 address +
-                "&startblock=1&endblock=99999999&sort=asc&apikey=" +
+                "&startblock=1&endblock=99999999&sort=desc&apikey=" +
                 apiKey;
               hashTrack = "https://bscscan.com/tx/";
             }
